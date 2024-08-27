@@ -82,8 +82,7 @@ int64_t msFromNs(int64_t nanos) {
 }
 
 bool patchXiaomiPickupSensor(V2_1::SensorInfo& sensor) {
-    if (sensor.typeAsString != "xiaomi.sensor.pickup" &&
-        sensor.typeAsString != "xiaomi pick up sensor") {
+    if (sensor.typeAsString != "xiaomi.sensor.pickup") {
         return true;
     }
 
@@ -144,9 +143,7 @@ Return<void> HalProxy::getSensorsList_2_1(ISensorsV2_1::getSensorsList_2_1_cb _h
 Return<void> HalProxy::getSensorsList(ISensorsV2_0::getSensorsList_cb _hidl_cb) {
     std::vector<V1_0::SensorInfo> sensors;
     for (const auto& iter : mSensors) {
-      if (iter.second.type != SensorType::HINGE_ANGLE) {
         sensors.push_back(convertToOldSensorInfo(iter.second));
-      }
     }
     _hidl_cb(sensors);
     return Void();
@@ -281,8 +278,8 @@ Return<Result> HalProxy::initializeCommon(
         Result currRes = mSubHalList[i]->initialize(this, this, i);
         if (currRes != Result::OK) {
             result = currRes;
-            ALOGE("Subhal '%s' failed to initialize with reason %" PRId32 ".",
-                  mSubHalList[i]->getName().c_str(), static_cast<int32_t>(currRes));
+            ALOGE("Subhal '%s' failed to initialize.", mSubHalList[i]->getName().c_str());
+            break;
         }
     }
 
@@ -374,7 +371,7 @@ Return<void> HalProxy::debug(const hidl_handle& fd, const hidl_vec<hidl_string>&
         return Void();
     }
 
-    int writeFd = fd->data[0];
+    android::base::borrowed_fd writeFd = dup(fd->data[0]);
 
     std::ostringstream stream;
     stream << "===HalProxy===" << std::endl;
