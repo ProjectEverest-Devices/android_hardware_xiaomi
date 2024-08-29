@@ -165,7 +165,7 @@ class DoubleTapSensor : public SysfsPollingOneShotSensor {
     DoubleTapSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
         : SysfsPollingOneShotSensor(
               sensorHandle, callback, GetPollPath(doubleTapPaths),
-              GetPollPath(doubleTapPathsEnable), "Double Tap Sensor", "co.aospa.sensor.double_tap",
+              "Double Tap Sensor", "org.lineageos.sensor.double_tap",
               static_cast<SensorType>(static_cast<int32_t>(SensorType::DEVICE_PRIVATE_BASE) + 3)) {}
 };
 #endif
