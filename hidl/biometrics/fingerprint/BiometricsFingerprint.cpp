@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2017 The Android Open Source Project
- *               2022-2024 The LineageOS Project
+ *               2022 The LineageOS Project
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -26,8 +26,8 @@ typedef struct fingerprint_hal {
 } fingerprint_hal_t;
 
 static const fingerprint_hal_t kModules[] = {
-        {"fortsense", false}, {"fpc", false},        {"fpc_fod", true}, {"goodix", false},
-        {"goodix_fod", true}, {"goodix_fod6", true}, {"silead", false}, {"syna", true},
+        {"fpc", false},        {"fpc_fod", true}, {"goodix", false}, {"goodix_fod", true},
+        {"goodix_fod6", true}, {"silead", false}, {"syna", true},
 };
 
 }  // anonymous namespace
@@ -209,16 +209,25 @@ Return<uint64_t> BiometricsFingerprint::setNotify(
 }
 
 Return<uint64_t> BiometricsFingerprint::preEnroll() {
+    if (mUdfpsHandler) {
+        mUdfpsHandler->preEnroll();
+    }
     return mDevice->pre_enroll(mDevice);
 }
 
 Return<RequestStatus> BiometricsFingerprint::enroll(const hidl_array<uint8_t, 69>& hat,
                                                     uint32_t gid, uint32_t timeoutSec) {
+    if (mUdfpsHandler) {
+        mUdfpsHandler->enroll();
+    }
     const hw_auth_token_t* authToken = reinterpret_cast<const hw_auth_token_t*>(hat.data());
     return ErrorFilter(mDevice->enroll(mDevice, authToken, gid, timeoutSec));
 }
 
 Return<RequestStatus> BiometricsFingerprint::postEnroll() {
+    if (mUdfpsHandler) {
+        mUdfpsHandler->postEnroll();
+    }
     return ErrorFilter(mDevice->post_enroll(mDevice));
 }
 

@@ -1,19 +1,49 @@
 /*
- * Copyright (C) 2021-2024 The LineageOS Project
+ * Copyright (C) 2021-2022 The LineageOS Project
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "Utils.h"
 
+#define LOG_TAG "android.hardware.light-service.xiaomi"
+
+#include <android-base/file.h>
+#include <android-base/logging.h>
+#include <unistd.h>
+
+using ::android::base::ReadFileToString;
+using ::android::base::WriteStringToFile;
+
 namespace aidl {
 namespace android {
 namespace hardware {
 namespace light {
 
-rgb::rgb() : red(0), green(0), blue(0) {}
+bool fileWriteable(const std::string& file) {
+    return !access(file.c_str(), W_OK);
+}
 
-rgb::rgb(uint8_t r, uint8_t g, uint8_t b) : red(r), green(g), blue(b){};
+bool readFromFile(const std::string& file, std::string *content) {
+    return ReadFileToString(file, content, true);
+}
+
+bool readFromFile(const std::string& file, uint32_t *content) {
+    std::string content_str;
+    if (readFromFile(file, &content_str))
+        *content = std::stoi(content_str);
+    else
+        return false;
+    return true;
+}
+
+bool writeToFile(const std::string& file, std::string content) {
+    return WriteStringToFile(content, file);
+}
+
+bool writeToFile(const std::string& file, uint32_t content) {
+    return writeToFile(file, std::to_string(content));
+}
 
 rgb::rgb(uint32_t color) {
     // Extract brightness from AARRGGBB.
@@ -25,7 +55,7 @@ rgb::rgb(uint32_t color) {
     blue = color & 0xFF;
 
     // Scale RGB colors if a brightness has been applied by the user
-    if (alpha > 0 && alpha < 0xFF) {
+    if (alpha > 0 && alpha < 255) {
         red = red * alpha / 0xFF;
         green = green * alpha / 0xFF;
         blue = blue * alpha / 0xFF;
@@ -36,19 +66,11 @@ bool rgb::isLit() {
     return !!red || !!green || !!blue;
 }
 
-static constexpr uint8_t kRedWeight = 77;
-static constexpr uint8_t kGreenWeight = 150;
-static constexpr uint8_t kBlueWeight = 29;
-
 uint8_t rgb::toBrightness() {
-    return (kRedWeight * red + kGreenWeight * green + kBlueWeight * blue) >> 8;
+    return (77 * red + 150 * green + 29 * blue) >> 8;
 }
 
-uint32_t scaleBrightness(uint8_t brightness, uint32_t maxBrightness) {
-    return brightness * maxBrightness / 0xFF;
-}
-
-}  // namespace light
-}  // namespace hardware
-}  // namespace android
-}  // namespace aidl
+} // namespace light
+} // namespace hardware
+} // namespace android
+} // namespace aidl
